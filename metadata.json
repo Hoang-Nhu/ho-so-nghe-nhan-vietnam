@@ -1,0 +1,6 @@
+{
+  "name": "Hồ sơ Nghệ nhân Nắm giữ Di sản Văn hóa Việt Nam",
+  "description": "Ứng dụng tra cứu và tôn vinh hồ sơ Nghệ nhân Nhân dân và Nghệ nhân Ưu tú nắm giữ di sản văn hóa phi vật thể và thủ công truyền thống Việt Nam. Sinh viên thực hiện: Nguyễn Văn Hoàng - PH64335 - B03.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

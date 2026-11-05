@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Playfair Display', 'Merriweather', Georgia, serif;
+  }
+  
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    background-color: #faf7f2;
+    color: #2c1810;
+  }
+}
+
+.font-serif-culture {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-sans-culture {
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+/* Aged Parchment / Giấy Dó & Sơn Mài Texture Effect */
+.bg-parchment-pattern {
+  background-color: #faf7f2;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.04) 0%, transparent 60%),
+    radial-gradient(circle at 10% 20%, rgba(136, 19, 55, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(180, 83, 9, 0.03) 0%, transparent 40%);
+}
+
+/* Vintage Oil Painting & Lacquer Frame Styling */
+.vintage-oil-frame {
+  box-shadow: 
+    0 10px 25px -5px rgba(44, 24, 16, 0.25),
+    0 0 0 1px rgba(212, 175, 55, 0.4),
+    inset 0 0 15px rgba(44, 24, 16, 0.6);
+}
+
+/* Canvas Texture Overlay for Oil Painting Vibe */
+.oil-canvas-texture {
+  position: relative;
+}
+
+.oil-canvas-texture::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: 
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 3px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode: multiply;
+  opacity: 0.6;
+}
+
+/* Gilded Gold Leaf Accent */
+.gilded-border {
+  border-image: linear-gradient(to bottom right, #facc15, #d4af37, #b45309, #d4af37) 1;
+}
+
+/* Subtle Woodblock Craquelure effect */
+.craquelure-border {
+  border-color: #d4af37;
+  border-width: 2px;
+  position: relative;
+}
