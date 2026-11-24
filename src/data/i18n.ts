@@ -84,14 +84,8 @@ export const I18N = {
     },
     ai: {
       title: 'Trợ lý AI Nghiên cứu Nghệ nhân & Di sản',
-      subtitle: 'Được hỗ trợ bởi Google Gemini. Hỗ trợ nghiên cứu chuyên sâu về nghệ thuật cổ truyền, kỹ thuật chế tác và tiểu sử các bậc tiền bối.',
-      byokTitle: 'Cấu hình Gemini API Key của bạn (BYOK)',
-      byokDesc: 'Để sử dụng trợ lý AI, vui lòng nhập API Key cá nhân của bạn. Key sẽ được lưu an toàn tại trình duyệt (localStorage) và chỉ gửi trực tiếp đến máy chủ Google Gemini.',
-      keyPlaceholder: 'Nhập Gemini API Key (bắt đầu bằng AIzaSy...)',
-      saveKey: 'Lưu Key',
-      saved: 'Đã lưu Key',
-      clearKey: 'Xóa Key',
-      noKeyWarning: 'Vui lòng nhập và lưu Gemini API Key của bạn ở ô bên dưới để bắt đầu hội thoại chuyên sâu.',
+      subtitle: 'Hỗ trợ giải đáp chuyên sâu về nghệ thuật cổ truyền, kỹ thuật chế tác, thanh nhạc dân gian và tiểu sử các bậc tiền bối.',
+      resetChat: 'Cuộc trò chuyện mới',
       quickPromptsTitle: 'Câu hỏi gợi ý nhanh:',
       quickPrompts: [
         'So sánh kỹ thuật đổ hột của cụ Quách Thị Hồ và kỹ thuật nảy hạt trong Dân ca Quan họ?',
@@ -208,14 +202,8 @@ export const I18N = {
     },
     ai: {
       title: 'Heritage & Artisan AI Scholar',
-      subtitle: 'Powered by Google Gemini. Specialized in Vietnamese traditional arts, vocal ornamentation, craftsmanship, and artisan biographies.',
-      byokTitle: 'Configure Your Personal Gemini API Key (BYOK)',
-      byokDesc: 'To converse with the AI Scholar, enter your personal Gemini API Key. It will be securely stored in your browser\'s localStorage and sent directly to Google Gemini servers.',
-      keyPlaceholder: 'Enter Gemini API Key (starts with AIzaSy...)',
-      saveKey: 'Save Key',
-      saved: 'Key Saved',
-      clearKey: 'Remove Key',
-      noKeyWarning: 'Please enter and save your Gemini API Key in the box below to start a scholarly consultation.',
+      subtitle: 'Specialized in Vietnamese traditional arts, vocal ornamentation, craftsmanship, and master artisan biographies.',
+      resetChat: 'New Conversation',
       quickPromptsTitle: 'Quick scholarly prompts:',
       quickPrompts: [
         'Compare Quach Thi Ho\'s glottal vibrato with Quan Ho vocal ornamentation techniques?',

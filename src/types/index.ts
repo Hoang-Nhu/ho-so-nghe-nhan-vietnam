@@ -5,6 +5,8 @@
 
 export type Language = 'vi' | 'en';
 
+export type ActivePage = 'home' | 'artisans' | 'ai-assistant' | 'references' | 'about';
+
 export type ArtisanTitle = 'NNND' | 'NNƯT'; // Nghệ nhân Nhân dân | Nghệ nhân Ưu tú
 
 export type Region = 'north' | 'central' | 'south';
