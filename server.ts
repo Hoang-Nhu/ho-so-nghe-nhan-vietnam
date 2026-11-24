@@ -97,93 +97,90 @@ async function generateWithRetry(
 ) {
   const isAqKey = apiKey.startsWith('AQ.');
 
-  // Route Default Gemini Project keys (both AIza... and new AQ.... keys) to
-  // generativelanguage.googleapis.com (v1beta first, then v1) first.
-  // If an AQ. key is a Vertex AI Express Mode key, fall back to aiplatform.googleapis.com.
-  const attempts: Array<{
-    label: string;
-    client: GoogleGenAI;
-    models: string[];
-  }> = [
-    {
-      label: 'mldev-v1beta',
-      client: new GoogleGenAI({
-        apiKey,
-        apiVersion: 'v1beta'
-      }),
-      models: ['gemini-2.5-flash', 'gemini-4-hydrogen', 'gemini-3.1-flash-lite', 'gemini-3.8-flash']
-    },
-    {
-      label: 'mldev-v1',
-      client: new GoogleGenAI({
-        apiKey,
-        apiVersion: 'v1'
-      }),
-      models: ['gemini-2.5-flash']
-    },
-    ...(isAqKey
-      ? [
-          {
-            label: 'vertex-v1',
-            client: new GoogleGenAI({
-              vertexai: true,
-              apiKey,
-              apiVersion: 'v1'
-            }),
-            models: ['gemini-2.5-flash', 'gemini-2.5-flash-lite']
-          },
-          {
-            label: 'vertex-v1beta1',
-            client: new GoogleGenAI({
-              vertexai: true,
-              apiKey,
-              apiVersion: 'v1beta1'
-            }),
-            models: ['gemini-2.5-flash', 'gemini-3-flash-preview']
-          }
-        ]
-      : [])
-  ];
+  const mldevClient = new GoogleGenAI({
+    apiKey,
+    apiVersion: 'v1beta'
+  });
 
-  let lastError: any;
-  const diagnostics: string[] = [];
+  // Valid non-deprecated models (per gemini-api guidelines)
+  const mldevModels = ['gemini-4-hydrogen', 'gemini-3.1-flash-lite', 'gemini-3.8-flash'];
 
-  for (const attempt of attempts) {
-    for (const model of attempt.models) {
+  let lastMldevError: any;
+  let mldevKeyRejectedWith401 = true;
+
+  for (const model of mldevModels) {
+    for (let retry = 0; retry < 2; retry++) {
       try {
-        const useThinking = model === 'gemini-4-hydrogen' && attempt.label === 'mldev-v1beta';
-        const config = useThinking
-          ? { systemInstruction, thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } }
-          : attempt.label === 'mldev-v1'
-            ? undefined
+        const config =
+          model === 'gemini-4-hydrogen'
+            ? { systemInstruction, thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } }
             : { systemInstruction };
 
-        return await attempt.client.models.generateContent({
+        return await mldevClient.models.generateContent({
           model,
           contents,
-          ...(config ? { config } : {})
+          config
         });
       } catch (err: any) {
-        lastError = err;
-        const { status, message, reason } = extractReadableError(err);
-        diagnostics.push(`${attempt.label}/${model}: ${status}${reason ? ` [${reason}]` : ''} ${message}`);
-        const shouldContinue =
-          status === 503 ||
-          status === 429 ||
-          status === 500 ||
-          status === 404 ||
-          status === 400 ||
-          (isAqKey && (status === 401 || status === 403));
-        if (!shouldContinue) {
-          console.error('[heritage-chat] Non-retryable error:', diagnostics.join(' | '));
-          throw err;
+        lastMldevError = err;
+        const { status } = extractReadableError(err);
+
+        // If Google recognized the key (even if 429 quota or 503 busy), do NOT fall back to Vertex AI
+        if (status !== 401) {
+          mldevKeyRejectedWith401 = false;
         }
-        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        if (status === 503 && retry === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 900));
+          continue;
+        }
+
+        if (status === 503 || status === 429 || status === 500 || status === 404 || (isAqKey && status === 401)) {
+          break; // try next model
+        }
+
+        throw err;
       }
     }
   }
-  console.error('[heritage-chat] All attempts failed:', diagnostics.join(' | '));
-  throw lastError;
+
+  // Only attempt Vertex AI Express Mode if it's an AQ. key AND mldev rejected the token with 401
+  if (isAqKey && mldevKeyRejectedWith401) {
+    const vertexAttempts = [
+      {
+        client: new GoogleGenAI({ vertexai: true, apiKey, apiVersion: 'v1' }),
+        models: ['gemini-3.1-flash-lite', 'gemini-3.8-flash']
+      },
+      {
+        client: new GoogleGenAI({ vertexai: true, apiKey, apiVersion: 'v1beta1' }),
+        models: ['gemini-4-hydrogen', 'gemini-3.1-flash-lite']
+      }
+    ];
+
+    for (const attempt of vertexAttempts) {
+      for (const model of attempt.models) {
+        try {
+          return await attempt.client.models.generateContent({
+            model,
+            contents,
+            config: { systemInstruction }
+          });
+        } catch (err: any) {
+          const { status } = extractReadableError(err);
+          if (status === 503 || status === 429 || status === 404) {
+            continue;
+          }
+          // Keep the clearer mldev 401 if Vertex AI API is disabled on the project
+          if (status === 403) {
+            throw lastMldevError;
+          }
+          throw err;
+        }
+      }
+    }
+  }
+
+  throw lastMldevError;
 }
 
 async function startServer() {
@@ -272,7 +269,7 @@ async function startServer() {
       const httpStatus = status >= 400 && status < 600 ? status : 500;
       const detailedMessage =
         reason === 'ACCESS_TOKEN_TYPE_UNSUPPORTED'
-          ? `${message} [ACCESS_TOKEN_TYPE_UNSUPPORTED — Kiểm tra Google Cloud Credentials > API restrictions: phải chọn "Generative Language API" (generativelanguage.googleapis.com) thay vì "Gemini API", hoặc để "Don't restrict key"]`
+          ? `${message} [ACCESS_TOKEN_TYPE_UNSUPPORTED — Kiểm tra Google Cloud Credentials > API restrictions: chọn "Generative Language API" (generativelanguage.googleapis.com) thay vì "Gemini API", hoặc để "Don't restrict key"]`
           : message;
       return res.status(httpStatus).json({
         error: detailedMessage

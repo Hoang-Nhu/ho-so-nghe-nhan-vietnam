@@ -30,29 +30,46 @@ export async function askHeritageScholar(
     })
   });
 
-  const data = await response.json().catch(() => null);
+  const rawText = await response.text().catch(() => '');
+  let data: any = null;
+  if (rawText) {
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = null;
+    }
+  }
 
   if (!response.ok) {
-    const serverMsg = data?.error || `HTTP ${response.status}: ${response.statusText}`;
-    if (response.status === 400 || response.status === 401 || response.status === 403) {
+    const fallbackDetail = rawText && rawText.length < 300 ? rawText.replace(/<[^>]+>/g, '').trim() : response.statusText;
+    const serverMsg = data?.error || `HTTP ${response.status}${fallbackDetail ? `: ${fallbackDetail}` : ''}`;
+
+    if (response.status === 401) {
       throw new Error(
         language === 'vi'
-          ? `API Key chưa hợp lệ hoặc chưa được cấp quyền (${serverMsg}). Vui lòng kiểm tra lại GEMINI_API_KEY trong mục Settings > Secrets.`
-          : `Invalid or unauthorized Gemini API Key (${serverMsg}). Please check GEMINI_API_KEY in Settings > Secrets.`
+          ? `API Key chưa hợp lệ (${serverMsg}). Vui lòng kiểm tra lại GEMINI_API_KEY trong mục Settings > Secrets.`
+          : `Invalid Gemini API Key (${serverMsg}). Please check GEMINI_API_KEY in Settings > Secrets.`
+      );
+    }
+    if (response.status === 403) {
+      throw new Error(
+        language === 'vi'
+          ? `Yêu cầu bị từ chối quyền truy cập (${serverMsg}). Nếu bạn đang dùng phiên bản Shared App hoặc proxy hạn chế POST, hãy mở trang Development App hoặc kiểm tra quyền Generative Language API.`
+          : `Access forbidden (${serverMsg}). Check Generative Language API permissions or use the Development App URL.`
       );
     }
     if (response.status === 429) {
       throw new Error(
         language === 'vi'
-          ? `Hệ thống đang vượt quá giới hạn lượt gọi (429). Vui lòng thử lại sau ít phút.`
-          : `Rate limit exceeded (429). Please wait a moment and try again.`
+          ? `API Key đã chạm giới hạn lượt gọi miễn phí trong ngày hoặc mỗi phút (429). Vui lòng đợi hoặc dùng key khác.`
+          : `API rate/daily free-tier limit exceeded (429). Please wait or use another key.`
       );
     }
     if (response.status === 503) {
       throw new Error(
         language === 'vi'
-          ? `Máy chủ AI đang có lượng truy cập cao tạm thời (503). Xin vui lòng thử gửi lại câu hỏi sau vài giây.`
-          : `The AI model is experiencing temporary high demand (503). Please try sending your question again in a few seconds.`
+          ? `Máy chủ mô hình Gemini đang quá tải tạm thời (503). Xin vui lòng bấm gửi lại câu hỏi sau vài giây.`
+          : `Gemini model servers are experiencing temporary high demand (503). Please try again in a few seconds.`
       );
     }
     throw new Error(
